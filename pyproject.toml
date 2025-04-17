@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "test-mvp"
+version = "0.1.0"
+description = "REST API для бронирования переговорных комнат"
+authors = ["s.riabov <s.riabov@cyber-ed.ru>"]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+django = ">=4.0,<5.0"
+djangorestframework = ">=3.16.0,<4.0.0"
+djangorestframework-simplejwt = ">=5.5.0,<6.0.0"
+psycopg2-binary = ">=2.9.10,<3.0.0"
+drf-yasg = ">=1.21.10,<2.0.0"
+django-filter = ">=25.1,<26.0"
+dj-database-url = ">=2.3.0,<3.0.0"
+gunicorn = "^23.0.0"
+whitenoise = "^6.9.0"
+django-postgres-extra = "^2.0.8"
+python-dateutil = "^2.9.0.post0"
+django-crontab = "^0.7.1"
+
+[tool.poetry.dev-dependencies]
+pytest = ">=8.3.5,<9.0.0"
+pytest-django = ">=4.11.1,<5.0.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

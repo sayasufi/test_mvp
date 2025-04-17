@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Master database
+  db-master:
+    image: bitnami/postgresql:15
+    container_name: db-master
+    environment:
+      - POSTGRESQL_POSTGRES_PASSWORD=booking
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=replicator
+      - POSTGRESQL_REPLICATION_PASSWORD=replicator_pass
+      - POSTGRESQL_USERNAME=booking
+      - POSTGRESQL_PASSWORD=booking
+      - POSTGRESQL_DATABASE=booking
+    volumes:
+      - postgres_master_data:/bitnami/postgresql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "localhost", "-U", "booking"]
+      interval: 10s
+      retries: 5
+
+  # Replica database
+  db-replica:
+    image: bitnami/postgresql:15
+    container_name: db-replica
+    depends_on:
+      - db-master
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_MASTER_HOST=db-master
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - POSTGRESQL_REPLICATION_USER=replicator
+      - POSTGRESQL_REPLICATION_PASSWORD=replicator_pass
+      - POSTGRESQL_POSTGRES_PASSWORD=booking
+      - POSTGRESQL_USERNAME=booking
+      - POSTGRESQL_PASSWORD=booking
+      - POSTGRESQL_DATABASE=booking
+    volumes:
+      - postgres_replica_data:/bitnami/postgresql
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "localhost", "-U", "booking"]
+      interval: 10s
+      retries: 5
+
+  # Web application
+  web:
+    build: .
+    container_name: web
+    restart: unless-stopped
+    depends_on:
+      db-master:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app:cached
+    environment:
+      # для мастер‑БД
+      DB_HOST: db-master
+      DB_PORT: 5432
+      # для реплики
+      REPLICA_DB_HOST: db-replica
+      REPLICA_DB_PORT: 5432
+      # остальные переменные
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: booking
+      DATABASE_URL: postgresql://booking:booking@db-master:5432/booking
+      REPLICA_DATABASE_URL: postgresql://booking:booking@db-replica:5432/booking
+    entrypoint: ["bash", "/app/entrypoint.sh"]
+
+volumes:
+  postgres_master_data:
+  postgres_replica_data:
