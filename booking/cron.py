@@ -8,7 +8,7 @@ def run_partition_manager():
     """
     Запускает команду pgpartition (psqlextra) для создания/поддержки партиций.
     """
-    call_command('pgpartition', verbosity=0)
+    call_command("pgpartition", verbosity=0)
 
 
 def db_maintenance():

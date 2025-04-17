@@ -19,7 +19,7 @@ class RegistrationView(generics.CreateAPIView):
 class RoomViewSet(viewsets.ModelViewSet):
     serializer_class = RoomSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['floor', 'capacity']
+    filterset_fields = ["floor", "capacity"]
 
     def get_permissions(self):
         if self.request.method in permissions.SAFE_METHODS:
@@ -28,49 +28,77 @@ class RoomViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Всегда читаем список комнат из мастера
-        return Room.objects.using('default').all()
+        return Room.objects.using("default").all()
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter('date', openapi.IN_QUERY, description="Дата (YYYY-MM-DD)", type=openapi.TYPE_STRING,
-                              required=True),
-            openapi.Parameter('start_time', openapi.IN_QUERY, description="Время начала (HH:MM:SS)",
-                              type=openapi.TYPE_STRING, required=True),
-            openapi.Parameter('end_time', openapi.IN_QUERY, description="Время окончания (HH:MM:SS)",
-                              type=openapi.TYPE_STRING, required=True),
-            openapi.Parameter('floor', openapi.IN_QUERY, description="Этаж (опционально)", type=openapi.TYPE_INTEGER),
-            openapi.Parameter('capacity', openapi.IN_QUERY, description="Минимальная вместимость (опционально)",
-                              type=openapi.TYPE_INTEGER),
+            openapi.Parameter(
+                "date",
+                openapi.IN_QUERY,
+                description="Дата (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=True,
+            ),
+            openapi.Parameter(
+                "start_time",
+                openapi.IN_QUERY,
+                description="Время начала (HH:MM:SS)",
+                type=openapi.TYPE_STRING,
+                required=True,
+            ),
+            openapi.Parameter(
+                "end_time",
+                openapi.IN_QUERY,
+                description="Время окончания (HH:MM:SS)",
+                type=openapi.TYPE_STRING,
+                required=True,
+            ),
+            openapi.Parameter(
+                "floor",
+                openapi.IN_QUERY,
+                description="Этаж (опционально)",
+                type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                "capacity",
+                openapi.IN_QUERY,
+                description="Минимальная вместимость (опционально)",
+                type=openapi.TYPE_INTEGER,
+            ),
         ],
-        operation_description="Возвращает список свободных комнат по заданным параметрам: date, start_time, end_time, floor, capacity"
+        operation_description="Возвращает список свободных комнат по заданным параметрам: date, start_time, end_time, floor, capacity",
     )
-    @action(detail=False, methods=['get'], url_path='free')
+    @action(detail=False, methods=["get"], url_path="free")
     def free_rooms(self, request):
-        date = request.query_params.get('date')
-        start_time = request.query_params.get('start_time')
-        end_time = request.query_params.get('end_time')
+        date = request.query_params.get("date")
+        start_time = request.query_params.get("start_time")
+        end_time = request.query_params.get("end_time")
 
         if not (date and start_time and end_time):
             return Response(
                 {"detail": "Параметры 'date', 'start_time' и 'end_time' обязательны."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         filters = {}
-        floor = request.query_params.get('floor')
-        capacity = request.query_params.get('capacity')
+        floor = request.query_params.get("floor")
+        capacity = request.query_params.get("capacity")
         if floor:
-            filters['floor'] = floor
+            filters["floor"] = floor
         if capacity:
-            filters['capacity__gte'] = capacity
+            filters["capacity__gte"] = capacity
 
         # Всегда работаем с мастер‑БД при определении свободных комнат
-        rooms = Room.objects.using('default').filter(**filters)
-        busy_room_ids = Booking.objects.using('default').filter(
-            date=date,
-            start_time__lt=end_time,
-            end_time__gt=start_time,
-        ).values_list('room_id', flat=True)
+        rooms = Room.objects.using("default").filter(**filters)
+        busy_room_ids = (
+            Booking.objects.using("default")
+            .filter(
+                date=date,
+                start_time__lt=end_time,
+                end_time__gt=start_time,
+            )
+            .values_list("room_id", flat=True)
+        )
         free_rooms = rooms.exclude(id__in=busy_room_ids)
 
         page = self.paginate_queryset(free_rooms)
@@ -86,15 +114,15 @@ class BookingViewSet(viewsets.ModelViewSet):
     pagination_class = CustomCursorPagination
     serializer_class = BookingSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['date', 'room']
+    filterset_fields = ["date", "room"]
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
+        if getattr(self, "swagger_fake_view", False):
             return Booking.objects.none()
         if self.request.user.is_staff:
-            return Booking.objects.all().select_related('room', 'user')
-        return Booking.objects.filter(user=self.request.user).select_related('room')
+            return Booking.objects.all().select_related("room", "user")
+        return Booking.objects.filter(user=self.request.user).select_related("room")
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -103,15 +131,24 @@ class BookingViewSet(viewsets.ModelViewSet):
         operation_description="Создание бронирования",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['room', 'date', 'start_time', 'end_time'],
+            required=["room", "date", "start_time", "end_time"],
             properties={
-                'room': openapi.Schema(type=openapi.TYPE_INTEGER, description="ID комнаты"),
-                'date': openapi.Schema(type=openapi.TYPE_STRING, description="Дата бронирования (YYYY-MM-DD)"),
-                'start_time': openapi.Schema(type=openapi.TYPE_STRING, description="Время начала (HH:MM:SS)"),
-                'end_time': openapi.Schema(type=openapi.TYPE_STRING, description="Время окончания (HH:MM:SS)"),
-            }
+                "room": openapi.Schema(
+                    type=openapi.TYPE_INTEGER, description="ID комнаты"
+                ),
+                "date": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Дата бронирования (YYYY-MM-DD)",
+                ),
+                "start_time": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Время начала (HH:MM:SS)"
+                ),
+                "end_time": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Время окончания (HH:MM:SS)"
+                ),
+            },
         ),
-        responses={201: BookingSerializer}
+        responses={201: BookingSerializer},
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)

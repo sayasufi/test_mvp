@@ -1,7 +1,10 @@
 import datetime
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
+
 from booking.models import Booking
+
 
 class Command(BaseCommand):
     help = "Проверяет, что ожидаемые партиции Booking созданы"
