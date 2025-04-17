@@ -29,17 +29,9 @@
 
 2. Создайте файл `.env` в корне проекта с переменными окружения:
    ```dotenv
-   POSTGRES_USER=booking
-   POSTGRES_PASSWORD=booking
-   POSTGRES_DB=booking
-   DB_HOST=db-master
-   DB_PORT=5432
-
-   REPLICA_DB_HOST=db-replica
-   REPLICA_DB_PORT=5432
-
-   SECRET_KEY=<ваш django SECRET_KEY>
+   SECRET_KEY=your-very-secret-key-here
    DEBUG=True
+   ALLOWED_HOSTS=testserver,localhost,127.0.0.1
    ```
 
 3. Запустите контейнеры:

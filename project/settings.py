@@ -21,13 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=^*368xk6nonlft5mg(ak+5%3n!j@j3e9)t1nd&y)*62=ke5v('
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key')
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'testserver,localhost,127.0.0.1').split(',')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
 
 # Application definition
 
@@ -90,7 +87,7 @@ DATABASES = {
             conn_max_age=600,
             ssl_require=False
         ),
-        'ENGINE': 'psqlextra.backend',   # <- важно
+        'ENGINE': 'psqlextra.backend',
     },
     'replica': dj_database_url.config(
         default=os.getenv('REPLICA_DATABASE_URL', DEFAULT_SQLITE_URL),

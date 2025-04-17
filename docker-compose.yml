@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-  # Master database
   db-master:
     image: bitnami/postgresql:15
     container_name: db-master
@@ -22,7 +19,6 @@ services:
       interval: 10s
       retries: 5
 
-  # Replica database
   db-replica:
     image: bitnami/postgresql:15
     container_name: db-replica
@@ -47,7 +43,6 @@ services:
       interval: 10s
       retries: 5
 
-  # Web application
   web:
     build: .
     container_name: web
@@ -60,17 +55,11 @@ services:
     volumes:
       - .:/app:cached
     environment:
-      # для мастер‑БД
-      DB_HOST: db-master
-      DB_PORT: 5432
-      # для реплики
-      REPLICA_DB_HOST: db-replica
-      REPLICA_DB_PORT: 5432
-      # остальные переменные
-      POSTGRES_USER: booking
-      POSTGRES_PASSWORD: booking
       DATABASE_URL: postgresql://booking:booking@db-master:5432/booking
       REPLICA_DATABASE_URL: postgresql://booking:booking@db-replica:5432/booking
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
     entrypoint: ["bash", "/app/entrypoint.sh"]
 
 volumes:
